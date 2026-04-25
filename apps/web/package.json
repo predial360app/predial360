@@ -1,0 +1,41 @@
+{
+  "name": "@predial360/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Predial360 Web — Portal do cliente e Admin (Next.js 14)",
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "clean": "rm -rf .next out"
+  },
+  "dependencies": {
+    "@predial360/shared": "*",
+    "next": "14.2.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@tanstack/react-query": "^5.52.1",
+    "axios": "^1.7.4",
+    "date-fns": "^3.6.0",
+    "react-hook-form": "^7.53.0",
+    "zod": "^3.23.8",
+    "@hookform/resolvers": "^3.9.0",
+    "zustand": "^4.5.5",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "lucide-react": "^0.439.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.10",
+    "typescript": "*"
+  }
+}

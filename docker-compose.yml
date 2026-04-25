@@ -1,0 +1,126 @@
+version: '3.9'
+
+# ─── Predial360 — Dev environment ─────────────────────────────────────────────
+# Serviços: PostgreSQL 16, Redis 7, LocalStack (S3 + IoT)
+# Uso: docker compose up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL 16 ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: predial360-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: predial360
+      POSTGRES_PASSWORD: predial360
+      POSTGRES_DB: predial360_dev
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U predial360 -d predial360_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - predial360-net
+
+  # ── Redis 7 ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: predial360-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - predial360-net
+
+  # ── LocalStack (AWS S3 + IoT Core simulado) ───────────────────────────────────
+  localstack:
+    image: localstack/localstack:3.7
+    container_name: predial360-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3,iot,secretsmanager
+      DEFAULT_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      PERSISTENCE: 1
+      DEBUG: 0
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/01-init.sh:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    networks:
+      - predial360-net
+
+  # ── pgAdmin (opcional — UI para PostgreSQL) ───────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: predial360-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@predial360.com.br
+      PGADMIN_DEFAULT_PASSWORD: predial360admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools
+    networks:
+      - predial360-net
+
+  # ── RedisInsight (opcional — UI para Redis) ───────────────────────────────────
+  redisinsight:
+    image: redis/redisinsight:2.54
+    container_name: predial360-redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles:
+      - tools
+    networks:
+      - predial360-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  localstack_data:
+  pgadmin_data:
+  redisinsight_data:
+
+networks:
+  predial360-net:
+    driver: bridge

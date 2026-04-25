@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@predial360/shared": ["../../packages/shared/src"]
+    }
+  },
+  "include": ["src", "prisma"],
+  "exclude": ["node_modules", "dist", "test"]
+}

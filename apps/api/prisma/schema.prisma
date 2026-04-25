@@ -1,0 +1,780 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Predial360 — Prisma Schema
+// PostgreSQL 16 | Prisma 5
+// Normas: NBR 5674, 16747, 14037, 15575, 16280, 9077
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  TECHNICIAN
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum PropertyType {
+  RESIDENTIAL
+  CLINIC
+  COMMERCE
+  MIXED
+}
+
+enum AssetCategory {
+  ELECTRICAL
+  HYDRAULIC
+  HVAC
+  ELEVATOR
+  FIRE_SAFETY
+  GENERATOR
+  SECURITY
+  STRUCTURE
+  FACADE
+  ROOF
+  PLUMBING
+  GAS
+  LANDSCAPING
+  OTHER
+}
+
+enum AssetStatus {
+  OPERATIONAL
+  UNDER_MAINTENANCE
+  DEACTIVATED
+  SCRAPPED
+}
+
+enum MaintenanceFrequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+  BIENNIAL
+}
+
+enum ServiceOrderType {
+  PREVENTIVE
+  CORRECTIVE
+  INSPECTION
+  EMERGENCY
+  REFORM
+}
+
+enum ServiceOrderStatus {
+  DRAFT
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  AWAITING_APPROVAL
+  APPROVED
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum ServiceOrderPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  EMERGENCY
+}
+
+enum ChecklistItemStatus {
+  PENDING
+  CONFORMING
+  NON_CONFORMING
+  NOT_APPLICABLE
+  REQUIRES_MONITORING
+}
+
+enum ReportStatus {
+  DRAFT
+  GENERATED
+  SIGNED
+  DELIVERED
+}
+
+enum ContractPlan {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  RECEIVED
+  OVERDUE
+  REFUNDED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  BOLETO
+  DEBIT_CARD
+}
+
+enum NotificationType {
+  SERVICE_ORDER_CREATED
+  SERVICE_ORDER_UPDATED
+  SERVICE_ORDER_COMPLETED
+  TECHNICIAN_ASSIGNED
+  TECHNICIAN_EN_ROUTE
+  PAYMENT_DUE
+  PAYMENT_CONFIRMED
+  REPORT_READY
+  MAINTENANCE_DUE
+  CONTRACT_EXPIRING
+  EMERGENCY_ALERT
+}
+
+enum AbntNorm {
+  NBR_5674
+  NBR_16747
+  NBR_14037
+  NBR_15575
+  NBR_16280
+  NBR_9077
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  PAYMENT
+  SIGNATURE
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id                    String      @id @default(uuid())
+  email                 String      @unique
+  passwordHash          String
+  name                  String
+  phone                 String?
+  cpf                   String?     @unique
+  avatarUrl             String?
+  role                  UserRole    @default(OWNER)
+  status                UserStatus  @default(PENDING_VERIFICATION)
+
+  // 2FA
+  twoFactorEnabled      Boolean     @default(false)
+  twoFactorSecret       String?     // criptografado (AES-256)
+
+  // Login social
+  googleId              String?     @unique
+  appleId               String?     @unique
+
+  // Técnico
+  crea                  String?     // Registro CREA
+  specialties           String[]    @default([])
+  availableForCall      Boolean     @default(false)
+  rating                Decimal?    @db.Decimal(3, 2)
+  totalServices         Int         @default(0)
+
+  // Localização em tempo real (técnico)
+  lastLatitude          Decimal?    @db.Decimal(10, 8)
+  lastLongitude         Decimal?    @db.Decimal(11, 8)
+  lastLocationAt        DateTime?
+
+  // Push notifications
+  fcmTokens             String[]    @default([])
+
+  // Asaas
+  asaasCustomerId       String?
+
+  // LGPD
+  consentGivenAt        DateTime?
+  dataRetentionDays     Int         @default(1825) // 5 anos
+
+  // Soft-delete
+  deletedAt             DateTime?
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  // Relações
+  ownedProperties       Property[]  @relation("PropertyOwner")
+  assignedOrders        ServiceOrder[] @relation("TechnicianOrders")
+  createdOrders         ServiceOrder[] @relation("OwnerOrders")
+  checklists            Checklist[]
+  reports               Report[]
+  contracts             Contract[]
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+  refreshTokens         RefreshToken[]
+  inventoryMovements    InventoryMovement[]
+  bodycamRecordings     BodycamRecording[]  @relation("TechnicianBodycams")
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// ─── RefreshToken ─────────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id          String    @id @default(uuid())
+  userId      String
+  tokenHash   String    @unique
+  jti         String    @unique  // JWT ID para revogação
+  userAgent   String?
+  ipAddress   String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([jti])
+  @@map("refresh_tokens")
+}
+
+// ─── Property ────────────────────────────────────────────────────────────────
+
+model Property {
+  id                   String        @id @default(uuid())
+  ownerId              String
+  name                 String
+  type                 PropertyType
+  description          String?
+
+  // Endereço
+  street               String
+  number               String
+  complement           String?
+  neighborhood         String
+  city                 String
+  state                String        @db.Char(2)
+  zipCode              String        @db.Char(9)
+  country              String        @default("BR") @db.Char(2)
+  latitude             Decimal?      @db.Decimal(10, 8)
+  longitude            Decimal?      @db.Decimal(11, 8)
+
+  // Características
+  buildingAge          Int?          // anos
+  totalArea            Decimal?      @db.Decimal(10, 2)  // m²
+  floors               Int?
+  units                Int?          // apartamentos/salas
+  registrationNumber   String?       // matrícula
+  habitaseNumber       String?
+  constructionYear     Int?
+
+  // Documentos
+  photoUrls            String[]      @default([])
+  documentUrls         String[]      @default([])
+
+  // Soft-delete
+  deletedAt            DateTime?
+
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  owner                User          @relation("PropertyOwner", fields: [ownerId], references: [id])
+  assets               Asset[]
+  serviceOrders        ServiceOrder[]
+  contracts            Contract[]
+  reports              Report[]
+
+  @@index([ownerId])
+  @@index([city, state])
+  @@index([deletedAt])
+  @@map("properties")
+}
+
+// ─── Asset ────────────────────────────────────────────────────────────────────
+
+model Asset {
+  id                     String               @id @default(uuid())
+  propertyId             String
+  name                   String
+  category               AssetCategory
+  brand                  String?
+  model                  String?
+  serialNumber           String?
+  installationDate       DateTime?
+  warrantyExpiration     DateTime?
+  lastMaintenanceDate    DateTime?
+  nextMaintenanceDate    DateTime?
+  maintenanceFrequency   MaintenanceFrequency?
+  applicableNorms        AbntNorm[]           @default([])
+  status                 AssetStatus          @default(OPERATIONAL)
+  qrCode                 String?              @unique
+  iotDeviceId            String?              @unique
+  notes                  String?
+  photoUrls              String[]             @default([])
+  manualUrl              String?              // NBR 14037
+
+  // Soft-delete
+  deletedAt              DateTime?
+
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  property               Property             @relation(fields: [propertyId], references: [id])
+  serviceOrders          ServiceOrder[]
+  inventoryItems         InventoryItem[]
+
+  @@index([propertyId])
+  @@index([category])
+  @@index([nextMaintenanceDate])
+  @@index([iotDeviceId])
+  @@index([deletedAt])
+  @@map("assets")
+}
+
+// ─── ServiceOrder ─────────────────────────────────────────────────────────────
+
+model ServiceOrder {
+  id                        String               @id @default(uuid())
+  code                      String               @unique  // OS-2024-00001
+  propertyId                String
+  ownerId                   String
+  technicianId              String?
+  assetId                   String?
+  type                      ServiceOrderType
+  status                    ServiceOrderStatus   @default(DRAFT)
+  priority                  ServiceOrderPriority @default(MEDIUM)
+  title                     String
+  description               String
+  applicableNorms           AbntNorm[]           @default([])
+
+  // Agendamento
+  scheduledDate             DateTime?
+  startedAt                 DateTime?
+  completedAt               DateTime?
+  estimatedDurationMinutes  Int?
+  actualDurationMinutes     Int?
+
+  // Custos
+  estimatedCost             Decimal?             @db.Decimal(10, 2)
+  finalCost                 Decimal?             @db.Decimal(10, 2)
+
+  // Notas
+  ownerNotes                String?
+  technicianNotes           String?
+
+  // Localização técnico no momento
+  technicianLatitude        Decimal?             @db.Decimal(10, 8)
+  technicianLongitude       Decimal?             @db.Decimal(11, 8)
+
+  // Mídia
+  photoUrls                 String[]             @default([])
+  videoUrls                 String[]             @default([])
+  signatureUrl              String?
+
+  // Avaliação
+  rating                    Int?                 // 1-5
+  ratingComment             String?
+  ratedAt                   DateTime?
+
+  // IA
+  aiComplianceScore         Int?                 // 0-100
+  aiRiskLevel               String?
+  aiAnalysisJson            Json?                // AiAnalysis completo
+  aiAnalyzedAt              DateTime?
+
+  // Soft-delete
+  deletedAt                 DateTime?
+
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+
+  property                  Property             @relation(fields: [propertyId], references: [id])
+  owner                     User                 @relation("OwnerOrders", fields: [ownerId], references: [id])
+  technician                User?                @relation("TechnicianOrders", fields: [technicianId], references: [id])
+  asset                     Asset?               @relation(fields: [assetId], references: [id])
+  checklist                 Checklist?
+  report                    Report?
+  payment                   Payment?
+  bodycamRecordings         BodycamRecording[]
+
+  @@index([propertyId])
+  @@index([ownerId])
+  @@index([technicianId])
+  @@index([status])
+  @@index([priority])
+  @@index([scheduledDate])
+  @@index([deletedAt])
+  @@map("service_orders")
+}
+
+// ─── Checklist ────────────────────────────────────────────────────────────────
+
+model Checklist {
+  id               String          @id @default(uuid())
+  serviceOrderId   String          @unique
+  technicianId     String
+  templateId       String?
+  title            String
+  description      String?
+  applicableNorms  AbntNorm[]      @default([])
+  completedAt      DateTime?
+  isOfflineSynced  Boolean         @default(false)
+  syncedAt         DateTime?
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  serviceOrder     ServiceOrder    @relation(fields: [serviceOrderId], references: [id])
+  technician       User            @relation(fields: [technicianId], references: [id])
+  template         ChecklistTemplate? @relation(fields: [templateId], references: [id])
+  items            ChecklistItem[]
+
+  @@index([technicianId])
+  @@index([completedAt])
+  @@map("checklists")
+}
+
+// ─── ChecklistItem ────────────────────────────────────────────────────────────
+
+model ChecklistItem {
+  id                   String              @id @default(uuid())
+  checklistId          String
+  order                Int
+  title                String
+  description          String?
+  norm                 AbntNorm?
+  normReference        String?             // Ex.: "NBR 5674:2012 item 7.3"
+  status               ChecklistItemStatus @default(PENDING)
+  technicianNote       String?
+  photoUrls            String[]            @default([])
+  isRequired           Boolean             @default(true)
+  requiresPhoto        Boolean             @default(false)
+  requiresMeasurement  Boolean             @default(false)
+
+  // Medições
+  measurementValue     Decimal?            @db.Decimal(12, 4)
+  measurementUnit      String?
+  measurementMin       Decimal?            @db.Decimal(12, 4)
+  measurementMax       Decimal?            @db.Decimal(12, 4)
+  measurementInRange   Boolean?
+
+  completedAt          DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  checklist            Checklist           @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId])
+  @@index([status])
+  @@map("checklist_items")
+}
+
+// ─── ChecklistTemplate ────────────────────────────────────────────────────────
+
+model ChecklistTemplate {
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  applicableNorms AbntNorm[]  @default([])
+  assetCategories String[]    @default([])
+  aiGenerated     Boolean     @default(false)
+  isActive        Boolean     @default(true)
+  createdById     String?
+  itemsJson       Json        // Array de itens base sem status
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  checklists      Checklist[]
+
+  @@index([isActive])
+  @@map("checklist_templates")
+}
+
+// ─── Report ───────────────────────────────────────────────────────────────────
+
+model Report {
+  id                   String       @id @default(uuid())
+  serviceOrderId       String       @unique
+  propertyId           String
+  technicianId         String
+  title                String
+  status               ReportStatus @default(DRAFT)
+  applicableNorms      AbntNorm[]   @default([])
+  summary              String
+  findingsJson         Json         // ReportFinding[]
+  nonConformitiesJson  Json?        // NonConformity[]
+  recommendations      String[]     @default([])
+  photoUrls            String[]     @default([])
+  pdfUrl               String?
+  signatureUrl         String?
+  signedAt             DateTime?
+  aiGeneratedContent   String?      // Texto gerado pelo Claude
+  technicianCrea       String?
+  validUntil           DateTime?    // Validade (NBR 16747)
+  deliveredAt          DateTime?
+
+  // Soft-delete
+  deletedAt            DateTime?
+
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  serviceOrder         ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+  property             Property     @relation(fields: [propertyId], references: [id])
+  technician           User         @relation(fields: [technicianId], references: [id])
+
+  @@index([propertyId])
+  @@index([technicianId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("reports")
+}
+
+// ─── Contract ─────────────────────────────────────────────────────────────────
+
+model Contract {
+  id                    String         @id @default(uuid())
+  propertyId            String
+  ownerId               String
+  plan                  ContractPlan
+  status                ContractStatus @default(DRAFT)
+  startDate             DateTime
+  endDate               DateTime?
+  monthlyAmount         Int            // centavos
+  billingDay            Int            @default(1) // dia do mês
+  asaasSubscriptionId   String?        @unique
+  includedServices      String[]       @default([])
+  maxServiceOrders      Int?
+  autoRenew             Boolean        @default(true)
+  cancelledAt           DateTime?
+  cancelReason          String?
+
+  // Soft-delete
+  deletedAt             DateTime?
+
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  property              Property       @relation(fields: [propertyId], references: [id])
+  owner                 User           @relation(fields: [ownerId], references: [id])
+  payments              Payment[]
+
+  @@index([ownerId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("contracts")
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
+model Payment {
+  id               String         @id @default(uuid())
+  contractId       String?
+  serviceOrderId   String?        @unique
+  ownerId          String
+  asaasPaymentId   String         @unique
+  amount           Int            // centavos
+  status           PaymentStatus  @default(PENDING)
+  method           PaymentMethod
+  description      String
+  dueDate          DateTime
+  paidAt           DateTime?
+
+  // Pix
+  pixQrCode        String?
+  pixCopyPaste     String?
+
+  // Boleto
+  boletoUrl        String?
+  boletoBarCode    String?
+
+  // URLs
+  invoiceUrl       String?
+  receiptUrl       String?
+
+  // Webhook Asaas
+  webhookData      Json?
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  contract         Contract?      @relation(fields: [contractId], references: [id])
+  serviceOrder     ServiceOrder?  @relation(fields: [serviceOrderId], references: [id])
+  owner            User           @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
+  @@index([contractId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("payments")
+}
+
+// ─── Inventory ────────────────────────────────────────────────────────────────
+
+model InventoryItem {
+  id              String              @id @default(uuid())
+  assetId         String?
+  name            String
+  description     String?
+  category        String
+  unit            String              // un, m, kg, L, etc.
+  currentStock    Decimal             @default(0) @db.Decimal(10, 2)
+  minimumStock    Decimal             @default(0) @db.Decimal(10, 2)
+  unitCost        Int                 @default(0) // centavos
+  supplier        String?
+  supplierCode    String?
+  location        String?             // Ex.: "Depósito A - Prateleira 3"
+  barCode         String?             @unique
+
+  // Soft-delete
+  deletedAt       DateTime?
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  asset           Asset?              @relation(fields: [assetId], references: [id])
+  movements       InventoryMovement[]
+
+  @@index([category])
+  @@index([currentStock])
+  @@index([deletedAt])
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id              String        @id @default(uuid())
+  inventoryItemId String
+  userId          String
+  type            String        // IN | OUT | ADJUSTMENT
+  quantity        Decimal       @db.Decimal(10, 2)
+  reason          String?
+  serviceOrderId  String?
+  createdAt       DateTime      @default(now())
+
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+
+  @@index([inventoryItemId])
+  @@index([userId])
+  @@map("inventory_movements")
+}
+
+// ─── BodycamRecording ─────────────────────────────────────────────────────────
+
+enum BodycamStatus {
+  RECORDING
+  UPLOADING
+  COMPLETED
+  FAILED
+}
+
+model BodycamRecording {
+  id               String        @id @default(uuid())
+  serviceOrderId   String
+  technicianId     String
+
+  // S3 Multipart Upload
+  uploadId         String?       // S3 multipart upload ID (durante upload)
+  s3Key            String?       // chave final no bucket privado
+  s3Url            String?       // URL permanente S3 (privada — nunca pública)
+
+  // Metadados do vídeo
+  status           BodycamStatus @default(RECORDING)
+  fileSizeBytes    BigInt?
+  durationSeconds  Int?
+  codec            String?       // H.264, H.265
+  resolution       String?       // ex: "1920x1080"
+  chunkCount       Int           @default(0)
+  thumbnailKey     String?       // chave S3 do thumbnail gerado pela Lambda
+
+  // Timestamps
+  startedAt        DateTime      @default(now())
+  finishedAt       DateTime?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  serviceOrder     ServiceOrder  @relation(fields: [serviceOrderId], references: [id])
+  technician       User          @relation("TechnicianBodycams", fields: [technicianId], references: [id])
+
+  @@index([serviceOrderId])
+  @@index([technicianId])
+  @@index([status])
+  @@map("bodycam_recordings")
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id            String           @id @default(uuid())
+  userId        String
+  type          NotificationType
+  title         String
+  body          String
+  data          Json?            // Record<string, string>
+  read          Boolean          @default(false)
+  readAt        DateTime?
+  fcmMessageId  String?
+
+  createdAt     DateTime         @default(now())
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// ─── AuditLog ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  userId       String?
+  action       AuditAction
+  resource     String      // ex.: "ServiceOrder", "User"
+  resourceId   String?
+  oldData      Json?       // snapshot antes da mudança
+  newData      Json?       // snapshot depois da mudança
+  ipAddress    String?
+  userAgent    String?
+  metadata     Json?
+
+  createdAt    DateTime    @default(now())
+
+  user         User?       @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

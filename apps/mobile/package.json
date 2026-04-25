@@ -1,0 +1,68 @@
+{
+  "name": "@predial360/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Predial360 Mobile — App do técnico e proprietário (Expo SDK 51)",
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "build:android": "eas build --platform android",
+    "build:ios": "eas build --platform ios",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "clean": "rm -rf .expo"
+  },
+  "dependencies": {
+    "@predial360/shared": "*",
+    "expo": "~51.0.28",
+    "expo-router": "~3.5.23",
+    "expo-status-bar": "~1.12.1",
+    "expo-location": "~17.0.1",
+    "expo-camera": "~15.0.16",
+    "expo-image-picker": "~15.0.7",
+    "expo-file-system": "~17.0.1",
+    "expo-document-picker": "~12.0.2",
+    "expo-notifications": "~0.28.18",
+    "expo-secure-store": "~13.0.2",
+    "expo-local-authentication": "~14.0.1",
+    "expo-av": "~14.0.7",
+    "expo-barcode-scanner": "~13.0.1",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-mmkv": "^2.12.2",
+    "@tanstack/react-query": "^5.52.1",
+    "axios": "^1.7.4",
+    "react-hook-form": "^7.53.0",
+    "zod": "^3.23.8",
+    "@hookform/resolvers": "^3.9.0",
+    "zustand": "^4.5.5",
+    "react-native-maps": "1.14.0",
+    "react-native-signature-canvas": "^4.7.2",
+    "date-fns": "^3.6.0",
+    "nativewind": "^4.0.1",
+    "@nozbe/watermelondb": "^0.27.1",
+    "@nozbe/with-observables": "^1.6.0",
+    "@react-native-community/netinfo": "^11.3.1",
+    "rxjs": "^7.8.1",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~18.2.79",
+    "@types/react-native": "~0.73.0",
+    "babel-preset-expo": "~11.0.14",
+    "typescript": "*",
+    "jest": "^29.7.0",
+    "jest-expo": "~51.0.3"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
+    ]
+  }
+}

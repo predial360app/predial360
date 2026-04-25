@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Railway — Configuração do serviço Predial360 API
+# Docs: https://docs.railway.app/reference/config-as-code
+# ─────────────────────────────────────────────────────────────────────────────
+
+[build]
+# Build context é o root do monorepo (necessário para packages/shared)
+# Configure em Railway > Settings > Build > "Root Directory" = "." (raiz)
+dockerfilePath = "apps/api/Dockerfile"
+watchPatterns   = ["apps/api/**", "packages/shared/**"]
+
+[deploy]
+startCommand    = "node dist/main"
+healthcheckPath = "/api/v1/health"
+healthcheckTimeout = 30
+restartPolicyType  = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[[deploy.environmentVariables]]
+# Railway injeta DATABASE_URL e REDIS_URL automaticamente via add-ons.
+# Apenas variáveis adicionais precisam ser configuradas manualmente.
+# Ver: .env.deploy.example para a lista completa.

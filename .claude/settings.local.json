@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep *)",
+      "Bash(find \"G:\\\\Meu Drive\\\\ELIAS\\\\PREDIAL 360\\\\APP\\\\apps\\\\mobile/app\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"notification\\\\|local-authentication\\\\|biometric\\\\|expo-notifications\\\\|firebase.*messaging\" {} \\\\;)",
+      "Bash(find \"G:\\\\Meu Drive\\\\ELIAS\\\\PREDIAL 360\\\\APP\\\\apps\\\\mobile/src\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -H \"react-native-maps\\\\|expo-task-manager\\\\|TaskManager\\\\|expo-notifications\\\\|registerForPushNotifications\\\\|expo-local-authentication\" {} \\\\;)",
+      "Bash(find \"G:\\\\Meu Drive\\\\ELIAS\\\\PREDIAL 360\\\\APP\\\\apps\\\\mobile\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -H \"react-native-maps\\\\|expo-task-manager\\\\|expo-notifications\\\\|expo-local-authentication\\\\|firebase.*messaging\" {} \\\\;)",
+      "Bash(find \"G:\\\\Meu Drive\\\\ELIAS\\\\PREDIAL 360\\\\APP\\\\apps\\\\mobile\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -H \"firebase\\\\|@react-native-firebase\\\\|biometric\\\\|LocalAuthentication\\\\|getIsDeviceLocalAuthenticationSupported\" {} \\\\;)",
+      "Bash(find \"G:\\\\Meu Drive\\\\ELIAS\\\\PREDIAL 360\\\\APP\\\\apps\\\\mobile/app\" -type f -name \"*.tsx\" -exec grep -l \"auth\\\\|login\\\\|login.*screen\" {} \\\\;)",
+      "Bash(find \"G:\\\\Meu Drive\\\\ELIAS\\\\PREDIAL 360\\\\APP\\\\apps\\\\mobile\" -type f \\\\\\( -name \"*.json\" -o -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"google-services\\\\|firebase\\\\|messaging\\\\|fcm\" {} \\\\;)",
+      "Bash(npm --version)",
+      "Bash(railway --version)",
+      "Bash(eas --version)",
+      "Bash(git --version)",
+      "Bash(npm install *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(git config *)"
+    ]
+  }
+}
