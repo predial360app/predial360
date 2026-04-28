@@ -30,6 +30,7 @@ COPY --from=deps /repo/node_modules ./node_modules
 # Em npm workspaces, dependências ficam hoistadas em node_modules raiz — não há node_modules por workspace
 
 # Copia código-fonte completo
+COPY tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 COPY package.json ./
