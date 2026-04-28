@@ -1,0 +1,57 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_SCHEME": "predial360",
+        "EAS_PROJECT_ID": "b1ff34fe-d7b3-4096-a2b8-28326b30da00"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_SCHEME": "predial360",
+        "EXPO_PUBLIC_API_URL": "https://api-production-b37c.up.railway.app/api/v1",
+        "EAS_PROJECT_ID": "b1ff34fe-d7b3-4096-a2b8-28326b30da00",
+        "APP_VARIANT": "preview"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_SCHEME": "predial360",
+        "EAS_PROJECT_ID": "b1ff34fe-d7b3-4096-a2b8-28326b30da00"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
+  }
+}
