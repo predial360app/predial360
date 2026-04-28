@@ -38,8 +38,9 @@ COPY package.json ./
 # Gera o cliente Prisma
 RUN cd apps/api && npx prisma generate
 
-# Compila shared primeiro, depois a API
-RUN cd packages/shared && npm run build 2>/dev/null || true
+# Compila shared primeiro (necessário para type-checking da API)
+RUN cd packages/shared && npm run build
+# Compila a API (usa packages/shared/dist para type-checking)
 RUN cd apps/api && npm run build
 
 # ── Stage 3: imagem de produção ───────────────────────────────────────────────
@@ -61,6 +62,11 @@ COPY --from=builder --chown=nestjs:nestjs /repo/apps/api/package.json ./package.
 
 # Garante que o cliente Prisma gerado esteja disponível
 COPY --from=builder --chown=nestjs:nestjs /repo/node_modules/.prisma ./node_modules/.prisma
+
+# Copia packages/shared para resolver o symlink do workspace npm
+# (node_modules/@predial360/shared aponta para ../../packages/shared)
+COPY --from=builder --chown=nestjs:nestjs /repo/packages/shared/dist     ./packages/shared/dist
+COPY --from=builder --chown=nestjs:nestjs /repo/packages/shared/package.json ./packages/shared/package.json
 
 USER nestjs
 
