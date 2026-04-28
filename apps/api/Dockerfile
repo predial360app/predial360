@@ -15,12 +15,12 @@ WORKDIR /repo
 RUN apk add --no-cache libc6-compat python3 make g++
 
 # Copia manifests de todo o monorepo para cache de camadas
-COPY package.json package-lock.json ./
+COPY package.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
 
-# Instala apenas produção (sem devDeps) para o stage final
-RUN npm ci --workspace=apps/api --workspace=packages/shared --include-workspace-root
+# Instala dependências (npm install compatível com ou sem package-lock.json)
+RUN npm install --workspace=apps/api --workspace=packages/shared --include-workspace-root --legacy-peer-deps
 
 # ── Stage 2: build ───────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
