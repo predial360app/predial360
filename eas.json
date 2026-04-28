@@ -29,7 +29,10 @@
         "enterpriseProvisioning": "adhoc"
       },
       "env": {
-        "EXPO_PUBLIC_APP_SCHEME": "predial360"
+        "EXPO_PUBLIC_APP_SCHEME": "predial360",
+        "EXPO_PUBLIC_API_URL": "https://api-production-b37c.up.railway.app/api/v1",
+        "EAS_PROJECT_ID": "b1ff34fe-d7b3-4096-a2b8-28326b30da00",
+        "APP_VARIANT": "preview"
       }
     },
     "production": {

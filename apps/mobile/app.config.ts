@@ -111,12 +111,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     extra: {
       apiUrl,
       eas: {
-        projectId: process.env['EAS_PROJECT_ID'] ?? 'TROQUE_PELO_EAS_PROJECT_ID',
+        projectId: process.env['EAS_PROJECT_ID'] ?? 'b1ff34fe-d7b3-4096-a2b8-28326b30da00',
       },
     },
 
     updates: {
-      url: `https://u.expo.dev/${process.env['EAS_PROJECT_ID'] ?? 'TROQUE_PELO_EAS_PROJECT_ID'}`,
+      url: `https://u.expo.dev/${process.env['EAS_PROJECT_ID'] ?? 'b1ff34fe-d7b3-4096-a2b8-28326b30da00'}`,
     },
 
     runtimeVersion: {
