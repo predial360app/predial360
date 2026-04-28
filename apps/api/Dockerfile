@@ -27,7 +27,7 @@ FROM node:20-alpine AS builder
 WORKDIR /repo
 
 COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/packages/shared/node_modules ./packages/shared/node_modules 2>/dev/null || true
+# Em npm workspaces, dependências ficam hoistadas em node_modules raiz — não há node_modules por workspace
 
 # Copia código-fonte completo
 COPY packages/shared ./packages/shared
