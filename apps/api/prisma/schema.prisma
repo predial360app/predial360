@@ -232,6 +232,7 @@ model User {
   checklists            Checklist[]
   reports               Report[]
   contracts             Contract[]
+  payments              Payment[]
   notifications         Notification[]
   auditLogs             AuditLog[]
   refreshTokens         RefreshToken[]
