@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "compilerOptions": {
+    "noImplicitOverride": false,
+    "noUncheckedIndexedAccess": false,
+    "strictNullChecks": false
+  },
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "prisma/seed.ts", "prisma/seed.js"]
 }

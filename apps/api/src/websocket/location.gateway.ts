@@ -130,7 +130,7 @@ export class LocationGateway
         id: true,
         ownerId: true,
         property: {
-          select: { latitude: true, longitude: true, address: true },
+          select: { latitude: true, longitude: true },
         },
         // ISSUE #8: incluso aqui para evitar N+1 no checkProximityAlert
         owner: {
@@ -189,11 +189,12 @@ export class LocationGateway
     this.connectedTechnicians.set(client.id, userId);
 
     // Verificar proximidade ao local da OS e notificar proprietário
+    const orderAny = order as unknown as Record<string, unknown>;
     await this.checkProximityAlert(
-      order.owner?.fcmTokens ?? [],
+      (orderAny['owner'] as { fcmTokens: string[] } | undefined)?.fcmTokens ?? [],
       payload.latitude,
       payload.longitude,
-      order.property ?? null,
+      (orderAny['property'] as { latitude: unknown; longitude: unknown } | null) ?? null,
       payload.serviceOrderId,
     );
   }

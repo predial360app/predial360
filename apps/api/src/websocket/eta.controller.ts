@@ -43,7 +43,7 @@ export class EtaController {
   @ApiResponse({ status: 200, description: 'ETA calculado com sucesso' })
   @ApiResponse({ status: 404, description: 'OS não encontrada' })
   @ApiResponse({ status: 503, description: 'Imóvel sem coordenadas cadastradas' })
-  getEta(@Param('id', ParseUUIDPipe) id: string) {
+  getEta(@Param('id', ParseUUIDPipe) id: string): Promise<unknown> {
     return this.etaService.computeEta(id);
   }
 
@@ -75,7 +75,7 @@ export class EtaController {
   getTracking(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: JwtPayload,
-  ) {
+  ): Promise<unknown> {
     return this.etaService.getTracking(id, user.sub);
   }
 }

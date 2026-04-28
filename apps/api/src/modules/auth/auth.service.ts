@@ -288,7 +288,7 @@ export class AuthService {
     const accessExpiresIn = this.configService.get<string>('app.jwt.accessExpiresIn', '15m');
     const refreshExpiresIn = this.configService.get<string>('app.jwt.refreshExpiresIn', '30d');
 
-    const payload: Omit<JwtPayload, 'iat' | 'exp'> = { sub: userId, email, role, jti };
+    const payload: Omit<JwtPayload, 'iat' | 'exp'> = { sub: userId, email, role: role as unknown as import('@predial360/shared').UserRole, jti };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {

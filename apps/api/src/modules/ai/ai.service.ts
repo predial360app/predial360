@@ -378,7 +378,7 @@ Responda em JSON (sem markdown):
    * Loga tokens ao finalizar.
    */
   private async pipeStream(
-    stream: Anthropic.MessageStream,
+    stream: AsyncIterable<Anthropic.MessageStreamEvent>,
     res: Response,
     eventType: string,
   ): Promise<void> {

@@ -50,7 +50,7 @@ export class BodycamController {
     @Param('serviceOrderId', ParseUUIDPipe) serviceOrderId: string,
     @CurrentUser() user: JwtPayload,
     @Body() dto: StartBodycamDto,
-  ) {
+  ): Promise<unknown> {
     return this.bodycamService.startRecording(serviceOrderId, user.sub, dto);
   }
 
@@ -75,7 +75,7 @@ export class BodycamController {
     @Param('serviceOrderId', ParseUUIDPipe) serviceOrderId: string,
     @CurrentUser() user: JwtPayload,
     @Body() dto: BodycamChunkDto,
-  ) {
+  ): Promise<unknown> {
     return this.bodycamService.uploadChunk(serviceOrderId, user.sub, dto);
   }
 
@@ -101,7 +101,7 @@ export class BodycamController {
     @Param('serviceOrderId', ParseUUIDPipe) serviceOrderId: string,
     @CurrentUser() user: JwtPayload,
     @Body() dto: FinishBodycamDto,
-  ) {
+  ): Promise<unknown> {
     return this.bodycamService.finishRecording(serviceOrderId, user.sub, dto);
   }
 

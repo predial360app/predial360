@@ -10,10 +10,13 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findActiveById(id: string): Promise<SafeUser | null> {
-    return this.prisma.user.findFirst({
+    const user = await this.prisma.user.findFirst({
       where: { id, status: UserStatus.ACTIVE, deletedAt: null },
-      omit: { passwordHash: true, twoFactorSecret: true },
     });
+    if (!user) return null;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, twoFactorSecret, ...safe } = user;
+    return safe as SafeUser;
   }
 
   async findByIdOrThrow(id: string): Promise<SafeUser> {

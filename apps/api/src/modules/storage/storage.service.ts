@@ -80,7 +80,7 @@ export class StorageService {
     }
 
     // Remove prefixo data:image/jpeg;base64, se presente
-    const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
+    const cleanBase64 = (base64.includes(',') ? base64.split(',')[1] : base64) ?? base64;
     const buffer = Buffer.from(cleanBase64, 'base64');
 
     if (buffer.length > MAX_SIZE_BYTES) {

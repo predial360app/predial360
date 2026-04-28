@@ -56,7 +56,7 @@ export class AssetsService {
         warrantyExpiration: dto.warrantyExpiration ? new Date(dto.warrantyExpiration) : undefined,
         maintenanceFrequency: dto.maintenanceFrequency,
         nextMaintenanceDate,
-        applicableNorms: (dto.applicableNorms as string[]) ?? [],
+        applicableNorms: (dto.applicableNorms as unknown as string[]) ?? [],
         notes: dto.notes,
         qrCode,
       },

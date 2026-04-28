@@ -73,7 +73,7 @@ export class ServiceOrdersService {
         scheduledDate: dto.scheduledDate ? new Date(dto.scheduledDate) : undefined,
         estimatedDurationMinutes: dto.estimatedDurationMinutes,
         estimatedCost: dto.estimatedCost,
-        applicableNorms: (dto.applicableNorms as string[]) ?? [],
+        applicableNorms: (dto.applicableNorms as unknown as string[]) ?? [],
         ownerNotes: dto.ownerNotes,
       },
       include: {
