@@ -73,7 +73,8 @@ export class ServiceOrdersService {
         scheduledDate: dto.scheduledDate ? new Date(dto.scheduledDate) : undefined,
         estimatedDurationMinutes: dto.estimatedDurationMinutes,
         estimatedCost: dto.estimatedCost,
-        applicableNorms: (dto.applicableNorms as unknown as string[]) ?? [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        applicableNorms: (dto.applicableNorms as any) ?? [],
         ownerNotes: dto.ownerNotes,
       },
       include: {

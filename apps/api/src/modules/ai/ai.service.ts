@@ -378,7 +378,8 @@ Responda em JSON (sem markdown):
    * Loga tokens ao finalizar.
    */
   private async pipeStream(
-    stream: AsyncIterable<Anthropic.MessageStreamEvent>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stream: AsyncIterable<Anthropic.MessageStreamEvent> & { finalMessage(): Promise<any> },
     res: Response,
     eventType: string,
   ): Promise<void> {

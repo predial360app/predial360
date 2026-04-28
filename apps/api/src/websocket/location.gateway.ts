@@ -194,7 +194,7 @@ export class LocationGateway
       (orderAny['owner'] as { fcmTokens: string[] } | undefined)?.fcmTokens ?? [],
       payload.latitude,
       payload.longitude,
-      (orderAny['property'] as { latitude: unknown; longitude: unknown } | null) ?? null,
+      (orderAny['property'] as { latitude: number | null; longitude: number | null; address: string | null } | null) ?? null,
       payload.serviceOrderId,
     );
   }

@@ -56,7 +56,8 @@ export class AssetsService {
         warrantyExpiration: dto.warrantyExpiration ? new Date(dto.warrantyExpiration) : undefined,
         maintenanceFrequency: dto.maintenanceFrequency,
         nextMaintenanceDate,
-        applicableNorms: (dto.applicableNorms as unknown as string[]) ?? [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        applicableNorms: (dto.applicableNorms as any) ?? [],
         notes: dto.notes,
         qrCode,
       },
