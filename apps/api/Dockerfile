@@ -50,6 +50,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
+# Dependências nativas para Prisma no Alpine (OpenSSL obrigatório)
+RUN apk add --no-cache openssl libc6-compat
+
 # Usuário sem privilégios para segurança
 RUN addgroup --system --gid 1001 nestjs \
  && adduser  --system --uid 1001 nestjs
@@ -73,8 +76,8 @@ USER nestjs
 EXPOSE 3000
 
 # Healthcheck para Railway/Docker
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget -qO- http://localhost:3000/api/v1/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/v1/health || exit 1
 
 # Roda migrations e inicia o servidor
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
