@@ -53,6 +53,11 @@ ENV PORT=3000
 # Dependências nativas para Prisma no Alpine (OpenSSL obrigatório)
 RUN apk add --no-cache openssl libc6-compat
 
+# O código compilado usa caminhos relativos baseados na estrutura do monorepo:
+# de /app/dist/modules/.../dto/ sobem 6 dirs até / e procuram packages/shared/dist
+# Cria symlink /packages -> /app/packages para que a resolução funcione
+RUN mkdir -p /packages
+
 # Usuário sem privilégios para segurança
 RUN addgroup --system --gid 1001 nestjs \
  && adduser  --system --uid 1001 nestjs
@@ -70,6 +75,10 @@ COPY --from=builder --chown=nestjs:nestjs /repo/node_modules/.prisma ./node_modu
 # (node_modules/@predial360/shared aponta para ../../packages/shared)
 COPY --from=builder --chown=nestjs:nestjs /repo/packages/shared/dist     ./packages/shared/dist
 COPY --from=builder --chown=nestjs:nestjs /repo/packages/shared/package.json ./packages/shared/package.json
+
+# Cria symlink como root antes de mudar para nestjs
+# /packages/shared/dist -> /app/packages/shared/dist (corrige paths relativos compilados)
+RUN ln -sf /app/packages/shared /packages/shared
 
 USER nestjs
 
