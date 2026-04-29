@@ -88,5 +88,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/v1/health || exit 1
 
-# Roda migrations e inicia o servidor
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+# Aplica o schema diretamente (sem arquivo de migrations — demo)
+# prisma db push sincroniza o schema.prisma com o banco na inicialização
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/main"]
