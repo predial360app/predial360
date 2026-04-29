@@ -89,4 +89,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/v1/health || exit 1
 
 # Aplica schema + seed de demo + inicia servidor
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node prisma/seed.js && node dist/main"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && (node prisma/seed.js || echo 'Seed falhou — continuando...') && node dist/main"]
