@@ -3,7 +3,7 @@ import type {
   Property,
   PaginatedResponse,
   ApiResponse,
-} from '@predial360/shared';
+} from '../types/shared';
 
 export interface PropertyWithScore extends Property {
   healthScore: {
