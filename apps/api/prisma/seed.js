@@ -129,7 +129,7 @@ async function main() {
   const osCode = `OS-${currentYear}-00001`;
 
   let order = await prisma.serviceOrder.findFirst({
-    where: { propertyId: property.id, code: osCode },
+    where: { code: osCode },
   });
 
   if (!order) {
