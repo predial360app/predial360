@@ -123,40 +123,34 @@ async function main() {
     console.log('  ℹ️  Ativo já existe:', asset.name);
   }
 
-  // ── Ordem de Serviço (idempotente por code) ───────────────────────────────
+  // ── Ordem de Serviço (upsert por code único) ─────────────────────────────
 
   const currentYear = new Date().getFullYear();
   const osCode = `OS-${currentYear}-00001`;
 
-  let order = await prisma.serviceOrder.findFirst({
+  const order = await prisma.serviceOrder.upsert({
     where: { code: osCode },
+    update: {},
+    create: {
+      code: osCode,
+      propertyId: property.id,
+      ownerId: owner.id,
+      technicianId: technician.id,
+      assetId: asset.id,
+      type: 'PREVENTIVE',
+      status: 'ASSIGNED',
+      priority: 'HIGH',
+      title: 'Manutenção Preventiva — Elevadores (NBR 5674)',
+      description:
+        'Inspeção completa dos sistemas de elevação conforme ABNT NBR 5674. ' +
+        'Verificar cabos, freios, painéis de controle e sistemas de segurança.',
+      scheduledDate: new Date(Date.now() + 2 * 24 * 3600 * 1000),
+      estimatedDurationMinutes: 240,
+      estimatedCost: 280000,
+      applicableNorms: ['NBR_5674'],
+    },
   });
-
-  if (!order) {
-    order = await prisma.serviceOrder.create({
-      data: {
-        code: osCode,
-        propertyId: property.id,
-        ownerId: owner.id,
-        technicianId: technician.id,
-        assetId: asset.id,
-        type: 'PREVENTIVE',
-        status: 'ASSIGNED',
-        priority: 'HIGH',
-        title: 'Manutenção Preventiva — Elevadores (NBR 5674)',
-        description:
-          'Inspeção completa dos sistemas de elevação conforme ABNT NBR 5674. ' +
-          'Verificar cabos, freios, painéis de controle e sistemas de segurança.',
-        scheduledDate: new Date(Date.now() + 2 * 24 * 3600 * 1000),
-        estimatedDurationMinutes: 240,
-        estimatedCost: 280000,
-        applicableNorms: ['NBR_5674'],
-      },
-    });
-    console.log('  ✓ OS criada:', order.code);
-  } else {
-    console.log('  ℹ️  OS já existe:', order.code);
-  }
+  console.log('  ✓ OS:', order.code, `(status: ${order.status})`);
 
   // ── Contrato (idempotente por owner+property) ─────────────────────────────
 
@@ -190,5 +184,8 @@ async function main() {
 }
 
 main()
-  .catch((e) => { console.error('Seed error:', e); process.exit(1); })
+  .catch((e) => {
+    // Logar o erro mas NÃO sair com código 1 — o servidor deve iniciar mesmo se o seed falhar
+    console.error('⚠️  Seed warning (não fatal):', e instanceof Error ? e.message : e);
+  })
   .finally(() => prisma.$disconnect());
