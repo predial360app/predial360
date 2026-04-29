@@ -8,23 +8,31 @@ import { NotificationType } from '@prisma/client';
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private readonly firebaseApp: admin.app.App;
+  private firebaseApp: admin.app.App | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    // Inicializar Firebase Admin (singleton)
-    if (!admin.apps.length) {
-      this.firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: this.configService.get<string>('app.firebase.projectId'),
-          clientEmail: this.configService.get<string>('app.firebase.clientEmail'),
-          privateKey: this.configService.get<string>('app.firebase.privateKey'),
-        }),
-      });
-    } else {
-      this.firebaseApp = admin.apps[0]!;
+    // Inicializar Firebase Admin (singleton) — graceful: push notifications
+    // ficam desabilitadas se as credenciais forem placeholders/inválidas
+    try {
+      if (!admin.apps.length) {
+        this.firebaseApp = admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: this.configService.get<string>('app.firebase.projectId'),
+            clientEmail: this.configService.get<string>('app.firebase.clientEmail'),
+            privateKey: this.configService.get<string>('app.firebase.privateKey'),
+          }),
+        });
+      } else {
+        this.firebaseApp = admin.apps[0] ?? null;
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Firebase Admin não inicializado (push notifications desabilitadas): ${err instanceof Error ? err.message : err}`,
+      );
+      this.firebaseApp = null;
     }
   }
 
@@ -35,7 +43,7 @@ export class NotificationsService {
     body: string,
     data?: Record<string, string>,
   ): Promise<void> {
-    if (!tokens.length) return;
+    if (!tokens.length || !this.firebaseApp) return;
 
     const message: admin.messaging.MulticastMessage = {
       tokens,
@@ -58,7 +66,7 @@ export class NotificationsService {
     };
 
     try {
-      const response = await this.firebaseApp.messaging().sendEachForMulticast(message);
+      const response = await this.firebaseApp!.messaging().sendEachForMulticast(message);
       this.logger.log(
         `Push enviado: ${response.successCount} sucesso(s), ${response.failureCount} falha(s)`,
       );
