@@ -13,7 +13,7 @@ import {
   type PropertyWithScore,
   type QrCodeResponse,
 } from '../services/properties.service';
-import type { PaginatedResponse, Property } from '@predial360/shared';
+import type { PaginatedResponse, Property } from '../types/shared';
 
 // ── Query keys ────────────────────────────────────────────────────────────────
 
