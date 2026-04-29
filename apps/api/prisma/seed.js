@@ -65,8 +65,10 @@ async function main() {
 
   // ── Imóvel (idempotente por nome+owner) ───────────────────────────────────
 
+  // Busca qualquer propriedade do owner (findFirst sem filtro de nome para evitar duplicatas)
   let property = await prisma.property.findFirst({
-    where: { ownerId: owner.id, name: 'Edifício Paulista Premium' },
+    where: { ownerId: owner.id },
+    orderBy: { createdAt: 'asc' }, // mais antiga primeiro (a criada manualmente via API)
   });
 
   if (!property) {
