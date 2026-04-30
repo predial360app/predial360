@@ -13,6 +13,16 @@ import {
 import { useRouter } from 'expo-router';
 import { apiClient, saveTokens, tokenStorage } from '../../src/lib/api-client';
 
+function decodeJwt(token: string): Record<string, unknown> {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '=='.slice((base64.length + 3) % 4);
+    return JSON.parse(atob(padded));
+  } catch {
+    return {};
+  }
+}
+
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -26,19 +36,32 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const { data } = await apiClient.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user } = data.data;
-      saveTokens(accessToken, refreshToken);
-      tokenStorage.set('userRole', user.role);
-      tokenStorage.set('userName', user.name);
+      // API returns { accessToken, refreshToken, expiresIn, tokenType } directly
+      const { data } = await apiClient.post<{
+        accessToken: string;
+        refreshToken: string;
+        expiresIn: number;
+        tokenType: string;
+      }>('/auth/login', { email, password });
 
-      if (user.role === 'TECHNICIAN') {
+      const { accessToken, refreshToken } = data;
+      saveTokens(accessToken, refreshToken);
+
+      // Decode JWT to extract role and email (no separate /me endpoint)
+      const payload = decodeJwt(accessToken);
+      const role = (payload['role'] as string) ?? 'OWNER';
+      const userEmail = (payload['email'] as string) ?? email;
+
+      tokenStorage.set('userRole', role);
+      tokenStorage.set('userEmail', userEmail);
+
+      if (role === 'TECHNICIAN') {
         router.replace('/(technician)/');
       } else {
         router.replace('/(owner)/');
       }
     } catch {
-      Alert.alert('Erro', 'E-mail ou senha incorretos.');
+      Alert.alert('Erro', 'E-mail ou senha incorretos. Verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
     }
