@@ -1,86 +1,52 @@
 import { useEffect } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
 import { useProperties } from '../../src/hooks/useProperties';
 import { tokenStorage } from '../../src/lib/api-client';
 import type { Property } from '../../src/types/shared';
 
 const TYPE_LABEL: Record<string, string> = {
-  RESIDENTIAL: 'Residencial',
-  COMMERCE: 'Comercial',
-  CLINIC: 'Clínica',
-  MIXED: 'Misto',
+  RESIDENTIAL: 'Residencial', COMMERCE: 'Comercial', CLINIC: 'Clínica', MIXED: 'Misto',
 };
 
 export default function OwnerHome() {
   const router = useRouter();
   const navigation = useNavigation();
-  const userName = tokenStorage.getString('userName') ?? 'Proprietário';
+  const userEmail = tokenStorage.getString('userEmail') ?? '';
+  const greeting = userEmail ? userEmail.split('@')[0] : 'Proprietário';
   const { data, isLoading, isError } = useProperties();
 
-  useEffect(() => {
-    navigation.setOptions({ title: 'Meus Imóveis' });
-  }, [navigation]);
+  useEffect(() => { navigation.setOptions({ title: 'Meus Imóveis' }); }, [navigation]);
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1E3A5F" />
-      </View>
-    );
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.error}>Erro ao carregar imóveis.</Text>
-      </View>
-    );
-  }
+  if (isLoading) return <View style={styles.center}><ActivityIndicator size="large" color="#1E3A5F" /></View>;
+  if (isError) return <View style={styles.center}><Text style={styles.error}>Erro ao carregar imóveis.</Text></View>;
 
   const properties: Property[] = data?.data ?? [];
 
-  function renderItem({ item }: { item: Property }) {
-    return (
-      <Pressable
-        style={styles.card}
-        onPress={() => router.push({ pathname: '/(owner)/property/[id]', params: { id: item.id } })}
-      >
-        <View style={styles.cardHeader}>
-          <Text style={styles.propertyName}>{item.name}</Text>
-          <View style={styles.typeBadge}>
-            <Text style={styles.typeText}>{TYPE_LABEL[item.type] ?? item.type}</Text>
-          </View>
-        </View>
-        <Text style={styles.address}>
-          {item.street}, {item.number} — {item.city}/{item.state}
-        </Text>
-        <Text style={styles.meta}>
-          {item.assets?.length ?? 0} ativo(s) • {item.floors ?? '—'} andares
-        </Text>
-      </Pressable>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Text style={styles.greeting}>Olá, {userName.split(' ')[0]} 👋</Text>
+      <Text style={styles.greeting}>Olá, {greeting} 👋</Text>
       {properties.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.empty}>Nenhum imóvel cadastrado.</Text>
-        </View>
+        <View style={styles.center}><Text style={styles.empty}>Nenhum imóvel cadastrado.</Text></View>
       ) : (
         <FlatList
           data={properties}
           keyExtractor={(p) => p.id}
-          renderItem={renderItem}
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.card}
+              onPress={() => router.push({ pathname: '/(owner)/property/[id]', params: { id: item.id } })}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.propertyName}>{item.name}</Text>
+                <View style={styles.typeBadge}>
+                  <Text style={styles.typeText}>{TYPE_LABEL[item.type] ?? item.type}</Text>
+                </View>
+              </View>
+              <Text style={styles.address}>{item.street}, {item.number} — {item.city}/{item.state}</Text>
+              <Text style={styles.meta}>{item.assets?.length ?? 0} ativo(s) • {item.floors ?? '—'} andares</Text>
+            </Pressable>
+          )}
           contentContainerStyle={{ paddingBottom: 32 }}
         />
       )}
